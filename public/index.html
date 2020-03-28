@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Weather-app</title>
+	<script src='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.js'></script>
+	<link href='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.css' rel='stylesheet' />
+</head>
+<body>
+	<h1>Weather App</h1>
+	<h2>Hello</h2>
+	<div id='map' style='width: 100vw; height: 40vw;'></div>
+
+<script type="text/javascript">
+	
+			//to check geolocation in navigator is present or not. 
+			if('geolocation' in navigator){
+
+
+			//to get map
+				mapboxgl.accessToken = 'pk.eyJ1IjoiamFja2VudDJiIiwiYSI6ImNrN3V4Z290ZTFiMjQzZm91ZjFkYzA1OHMifQ.D9RSONtuQJUI6sJTVWQaww';
+				var map = new mapboxgl.Map({
+				container: 'map',
+				style: 'mapbox://styles/mapbox/streets-v11',
+				zoom:1
+			});
+			//map ends
+
+				console.log("present");
+				navigator.geolocation.getCurrentPosition(async(position)=>{
+					 let lat=position.coords.latitude;
+					 let lon=position.coords.longitude;
+
+				document.getElementById('but').addEventListener('click',async()=>{
+				document.getElementById('latitude').textContent=lat;
+				document.getElementById('longitude').textContent=lon;
+				
+				let data={lat,lon};
+
+				//Using it we can avoid CORS
+				const url = `weather/${lat},${lon}`;
+					//using fetch to send post request
+					const res = await fetch(url);
+					const back = await res.json();
+					let {back1,back2}=back;
+					console.log(back);
+					let weather = back1.currently.summary;
+					document.getElementById('summary').textContent = weather;
+					let icon = back1.currently.icon;
+					document.getElementById('icon').textContent = icon;
+					
+					let dataTosaved={lat,lon,weather,icon} ;
+
+				//post request to save data in database
+					let options={
+						method: 'post',
+						body:JSON.stringify(dataTosaved),
+						headers:{
+							"Content-Type":"application/json"
+						}											
+					}
+						
+					fetch(url,options)
+					.then(res => res.json())
+					.then(data => console.log(data));					
+
+					try{
+
+					let back2data = back2.results[0].measurements[0];
+					document.getElementById('Parameter').textContent = back2data.parameter;
+
+					document.getElementById('value').textContent = back2data.value;
+
+					document.getElementById('unit').textContent = back2data.unit;
+					}
+					catch{
+					document.getElementById('Parameter').textContent = "No data available for this location";
+
+					document.getElementById('value').textContent = "No data available for this location";
+
+					document.getElementById('unit').textContent = "No data available for this location";
+					}
+
+
+
+					})
+
+				fetch('/getLocation')
+				.then(res=>res.json())
+				.then((data)=>data.forEach((data)=>{
+				new mapboxgl.Marker({}).setLngLat([data.lon, data.lat]).addTo(map);
+				})	
+				)
+				console.log(location);
+
+				})
+
+			}
+			else{
+				console.log("absent");
+			}
+
+</script>
+
+    <p>latitude: <span id="latitude" ></span></p>
+	<p>latitude: <span id="longitude" ></span></p>
+
+	<h2>currently:</h2>
+	<p>summary: <span id="summary" ></span></p>
+	<p>icon: <span id="icon" ></span></p>
+	<button id="but" type="submit">submit</button>
+
+	<h2>air quality:</h2>
+	<p>Parameter: <span id="Parameter"></span></p>
+	<p>value: <span id="value"></span></p>
+	<p>unit: <span id="unit"></span></p>
+
+	</body>
+</html>
